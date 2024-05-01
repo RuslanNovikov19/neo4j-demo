@@ -1,0 +1,36 @@
+// Создать ноду Person с именем Michael Cain
+MERGE (p:Person {name: 'Michael Cain'})
+
+// Создать две ноды (да, это один запрос на три строчки)
+MERGE (p:Person {name: 'Katie Holmes'})
+MERGE (m:Movie {title: 'The Dark Knight'})
+RETURN p, m
+Небольшое отступление: можно также использовать ключевое слово CREATE с той лишь разницей, что CREATE не будет проверять по первичному ключу существует ли уже такая нода в БД — это дает ему огромное преимущество в скорости. CREATE чаще всего используют для дампов, чтобы быстро можно было их развернуть на чистой базе. MERGE занимается вставкой данных более аккуратно — с проверкой всех условий, но и более медленно.
+
+
+Дело в том, что в этом запросе MATCH говорит нам о том, что мы должны найти записи, а MERGE о том, что мы должны создать связь между ними. Однако, если записи не найдены, то связь и не создастся. Для гарантированного создания сущности или связи можно использовать MERGE для всех трех частей запроса:
+
+MERGE (p:Person {name: 'Michael Cain'})
+MERGE (m:Movie {title: 'The Dark Knight'})
+MERGE (p)-[:ACTED_IN]->(m)
+
+// или в одну строку:
+MERGE (p:Person {name: 'Michael Cain'})-[:ACTED_IN]->(m:Movie {title: 'The Dark Knight'})
+RETURN p, m
+
+
+Для удаления атрибутов можно просто присвоить им значение null или явно вызвать ключевое слово REMOVE:
+
+// Вот так
+MATCH (p:Person)
+WHERE p.name = 'Gene Hackman'
+SET p.born = null
+RETURN p
+
+// Или так
+MATCH (p:Person)-[r:ACTED_IN]->(m:Movie)
+WHERE p.name = 'Michael Cain' AND m.title = 'The Dark Knight'
+REMOVE r.roles
+RETURN p, r, m
+
+
